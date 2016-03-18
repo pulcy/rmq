@@ -158,7 +158,14 @@ func (connection *redisConnection) heartbeat() {
 }
 
 func (connection *redisConnection) updateHeartbeat() bool {
-	return !redisErrIsNil(connection.redisClient.SetEx(connection.heartbeatKey, heartbeatDuration, "1"))
+	for i := 0; i < 5; i++ {
+		ok := !redisErrIsNil(connection.redisClient.SetEx(connection.heartbeatKey, heartbeatDuration, "1"))
+		if ok {
+			return true
+		}
+		time.Sleep(time.Millisecond * 50)
+	}
+	return false
 }
 
 // hijackConnection reopens an existing connection for inspection purposes without starting a heartbeat
