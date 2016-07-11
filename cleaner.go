@@ -59,12 +59,12 @@ func (cleaner *Cleaner) CleanQueue(queue *redisQueue) {
 	// log.Printf("rmq cleaner cleaned queue %s %d", queue, returned)
 }
 
-func (cleaner *Cleaner) check(connection *redisConnection) {
+func (cleaner *Cleaner) check(connection *redisConnection) bool {
 	for i := 0; i < 5; i++ {
 		if connection.Check() {
 			return true
 		}
-		time.Sleep(time.Second * (i + 1))
+		time.Sleep(time.Second * time.Duration(i+1))
 	}
 	return false
 }
