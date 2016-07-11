@@ -1,6 +1,9 @@
 package rmq
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 type Cleaner struct {
 	connection *redisConnection
@@ -14,7 +17,7 @@ func (cleaner *Cleaner) Clean() error {
 	connectionNames := cleaner.connection.GetConnections()
 	for _, connectionName := range connectionNames {
 		connection := cleaner.connection.hijackConnection(connectionName)
-		if connection.Check() {
+		if cleaner.check(connection) {
 			continue // skip active connections!
 		}
 
@@ -54,4 +57,14 @@ func (cleaner *Cleaner) CleanQueue(queue *redisQueue) {
 	queue.CloseInConnection()
 	_ = returned
 	// log.Printf("rmq cleaner cleaned queue %s %d", queue, returned)
+}
+
+func (cleaner *Cleaner) check(connection *redisConnection) {
+	for i := 0; i < 5; i++ {
+		if connection.Check() {
+			return true
+		}
+		time.Sleep(time.Second * (i + 1))
+	}
+	return false
 }
